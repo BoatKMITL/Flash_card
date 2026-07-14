@@ -242,7 +242,7 @@
 
     .selection-actions {
       display: grid;
-      grid-template-columns: 1.2fr 1fr 1fr;
+      grid-template-columns: 1.2fr 1.2fr 1fr 1fr;
       gap: 10px;
       margin-top: 14px;
     }
@@ -302,10 +302,27 @@
       color: var(--muted);
     }
 
+    .word-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .move-btn {
+      background: #e0f2fe;
+      color: #075985;
+      padding: 9px 11px;
+      min-width: 38px;
+    }
+
     .delete-btn {
       background: #fee2e2;
       color: var(--danger);
       padding: 10px 13px;
+    }
+
+    .move-btn:disabled {
+      opacity: .35;
     }
 
     @media (max-width: 680px) {
@@ -336,9 +353,10 @@
         grid-row: 1 / span 3;
       }
 
-      .delete-btn {
+      .word-actions {
         grid-column: 3;
         grid-row: 1 / span 3;
+        flex-direction: column;
       }
 
       .selection-actions {
@@ -397,6 +415,7 @@
       </form>
 
       <div class="selection-actions">
+        <button class="selected-btn" id="useSelectedBtn" type="button">ใช้คำที่เลือก</button>
         <button class="selected-random-btn" id="randomSelectedBtn" type="button">สุ่มคำที่เลือก</button>
         <button class="select-all-btn" id="selectAllBtn" type="button">เลือกทั้งหมด</button>
         <button class="clear-select-btn" id="clearSelectionBtn" type="button">ยกเลิกทั้งหมด</button>
@@ -449,6 +468,7 @@
     const randomCountInput = document.getElementById("randomCountInput");
     const randomBtn = document.getElementById("randomBtn");
     const randomStatus = document.getElementById("randomStatus");
+    const useSelectedBtn = document.getElementById("useSelectedBtn");
     const randomSelectedBtn = document.getElementById("randomSelectedBtn");
     const selectAllBtn = document.getElementById("selectAllBtn");
     const clearSelectionBtn = document.getElementById("clearSelectionBtn");
@@ -542,13 +562,33 @@
         meaning.className = "word-meaning";
         meaning.textContent = item.meaning || "-";
 
+        const actions = document.createElement("div");
+        actions.className = "word-actions";
+
+        const moveUpButton = document.createElement("button");
+        moveUpButton.className = "move-btn";
+        moveUpButton.type = "button";
+        moveUpButton.textContent = "↑";
+        moveUpButton.title = "เลื่อนขึ้น";
+        moveUpButton.disabled = index === 0;
+        moveUpButton.addEventListener("click", () => moveWord(index, -1));
+
+        const moveDownButton = document.createElement("button");
+        moveDownButton.className = "move-btn";
+        moveDownButton.type = "button";
+        moveDownButton.textContent = "↓";
+        moveDownButton.title = "เลื่อนลง";
+        moveDownButton.disabled = index === allWords.length - 1;
+        moveDownButton.addEventListener("click", () => moveWord(index, 1));
+
         const deleteButton = document.createElement("button");
         deleteButton.className = "delete-btn";
         deleteButton.type = "button";
         deleteButton.textContent = "ลบ";
         deleteButton.addEventListener("click", () => deleteWord(index));
 
-        row.append(checkbox, kanji, reading, meaning, deleteButton);
+        actions.append(moveUpButton, moveDownButton, deleteButton);
+        row.append(checkbox, kanji, reading, meaning, actions);
         wordList.appendChild(row);
       });
     }
@@ -585,6 +625,23 @@
       }
 
       renderCard();
+    }
+
+    function moveWord(index, direction) {
+      const newIndex = index + direction;
+
+      if (newIndex < 0 || newIndex >= allWords.length) return;
+
+      [allWords[index], allWords[newIndex]] = [allWords[newIndex], allWords[index]];
+
+      if (!randomMode) {
+        kanjiList = [...allWords];
+        currentIndex = newIndex;
+      }
+
+      saveWords();
+      renderAll();
+      updateRandomStatus();
     }
 
     function deleteWord(index) {
@@ -874,6 +931,7 @@ function randomizeSelectedWords() {
 
     speakBtn.addEventListener("click", speakCurrentWord);
     randomBtn.addEventListener("click", randomizeWords);
+    useSelectedBtn.addEventListener("click", useSelectedWords);
     randomSelectedBtn.addEventListener("click", randomizeSelectedWords);
     selectAllBtn.addEventListener("click", selectAllWords);
     clearSelectionBtn.addEventListener("click", clearSelectedWords);
