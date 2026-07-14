@@ -247,11 +247,33 @@
       margin-top: 14px;
     }
 
-    .backup-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
+    .backup-wrap {
       margin-top: 10px;
+    }
+
+    .backup-toggle {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .backup-actions {
+      display: none;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .backup-actions.is-open {
+      display: grid;
+    }
+
+    .backup-actions button {
+      padding: 9px 11px;
+      font-size: 13px;
     }
 
     .export-btn {
@@ -363,9 +385,6 @@
         grid-template-columns: 1fr;
       }
 
-      .backup-actions {
-        grid-template-columns: 1fr;
-      }
     }
   </style>
 </head>
@@ -421,10 +440,13 @@
         <button class="clear-select-btn" id="clearSelectionBtn" type="button">ยกเลิกทั้งหมด</button>
       </div>
 
-      <div class="backup-actions">
-        <button class="export-btn" id="exportBtn" type="button">ส่งออกคำศัพท์ (.json)</button>
-        <button class="import-btn" id="importBtn" type="button">นำเข้าคำศัพท์ (.json)</button>
-        <input class="file-input" id="importFileInput" type="file" accept=".json,application/json" />
+      <div class="backup-wrap">
+        <button class="backup-toggle" id="backupToggleBtn" type="button">สำรองข้อมูล ▾</button>
+        <div class="backup-actions" id="backupActions">
+          <button class="export-btn" id="exportBtn" type="button">Export JSON</button>
+          <button class="import-btn" id="importBtn" type="button">Import JSON</button>
+          <input class="file-input" id="importFileInput" type="file" accept=".json,application/json" />
+        </div>
       </div>
 
       <div class="word-list" id="wordList"></div>
@@ -472,6 +494,8 @@
     const randomSelectedBtn = document.getElementById("randomSelectedBtn");
     const selectAllBtn = document.getElementById("selectAllBtn");
     const clearSelectionBtn = document.getElementById("clearSelectionBtn");
+    const backupToggleBtn = document.getElementById("backupToggleBtn");
+    const backupActions = document.getElementById("backupActions");
     const exportBtn = document.getElementById("exportBtn");
     const importBtn = document.getElementById("importBtn");
     const importFileInput = document.getElementById("importFileInput");
@@ -935,6 +959,11 @@ function randomizeSelectedWords() {
     randomSelectedBtn.addEventListener("click", randomizeSelectedWords);
     selectAllBtn.addEventListener("click", selectAllWords);
     clearSelectionBtn.addEventListener("click", clearSelectedWords);
+    backupToggleBtn.addEventListener("click", () => {
+      const isOpen = backupActions.classList.toggle("is-open");
+      backupToggleBtn.textContent = isOpen ? "สำรองข้อมูล ▴" : "สำรองข้อมูล ▾";
+    });
+
     exportBtn.addEventListener("click", exportWordsToJson);
     importBtn.addEventListener("click", () => importFileInput.click());
     importFileInput.addEventListener("change", () => {
