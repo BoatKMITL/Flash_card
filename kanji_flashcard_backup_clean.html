@@ -1,0 +1,923 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kanji Flashcard</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --primary: #2563eb;
+      --danger: #dc2626;
+      --border: #e5e7eb;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 20px;
+    }
+
+    .app {
+      width: min(760px, 100%);
+      margin: 0 auto;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      min-height: 330px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 32px 24px;
+      box-shadow: 0 12px 30px rgba(0,0,0,.06);
+      text-align: center;
+      user-select: none;
+      cursor: pointer;
+    }
+
+    .kanji {
+      font-size: clamp(64px, 18vw, 110px);
+      font-weight: 700;
+      line-height: 1.15;
+      margin-bottom: 24px;
+    }
+
+    .reading {
+      min-height: 44px;
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .meaning {
+      min-height: 28px;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .empty {
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .hidden {
+      visibility: hidden;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1.4fr;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .extra-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .random-controls {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .random-controls input {
+      min-width: 0;
+    }
+
+    .random-btn {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .all-btn {
+      background: #e0f2fe;
+      color: #075985;
+    }
+
+    .random-status {
+      margin-top: 8px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      min-height: 20px;
+    }
+
+    .speak-btn {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .manage-toggle {
+      background: #ede9fe;
+      color: #5b21b6;
+    }
+
+    .manager.is-hidden {
+      display: none;
+    }
+
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 14px 18px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .prev {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .next {
+      background: var(--primary);
+      color: white;
+    }
+
+    .danger {
+      background: #fee2e2;
+      color: var(--danger);
+    }
+
+    button:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+    }
+
+    .hint {
+      text-align: center;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .manager {
+      margin-top: 24px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px;
+    }
+
+    .manager h2 {
+      margin: 0 0 16px;
+      font-size: 21px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr auto;
+      gap: 10px;
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 16px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+    }
+
+    .add-btn {
+      background: var(--primary);
+      color: white;
+      white-space: nowrap;
+    }
+
+    .word-list {
+      margin-top: 18px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .word-item {
+      display: grid;
+      grid-template-columns: auto 1fr 1fr 1fr auto;
+      gap: 10px;
+      align-items: center;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .select-checkbox {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+
+    .selection-actions {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .backup-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .export-btn {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .import-btn {
+      background: #ede9fe;
+      color: #5b21b6;
+    }
+
+    .file-input {
+      display: none;
+    }
+
+    .selected-btn {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .selected-random-btn {
+      background: #fde68a;
+      color: #92400e;
+    }
+
+    .select-all-btn {
+      background: #ecfccb;
+      color: #3f6212;
+    }
+
+    .clear-select-btn {
+      background: #f3f4f6;
+      color: #374151;
+    }
+
+    .word-kanji {
+      font-size: 23px;
+      font-weight: 700;
+    }
+
+    .word-reading {
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .word-meaning {
+      color: var(--muted);
+    }
+
+    .delete-btn {
+      background: #fee2e2;
+      color: var(--danger);
+      padding: 10px 13px;
+    }
+
+    @media (max-width: 680px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .random-controls {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .random-controls input {
+        grid-column: 1 / -1;
+      }
+
+      .word-item {
+        grid-template-columns: auto 1fr auto;
+      }
+
+      .word-kanji,
+      .word-reading,
+      .word-meaning {
+        grid-column: 2;
+      }
+
+      .select-checkbox {
+        grid-column: 1;
+        grid-row: 1 / span 3;
+      }
+
+      .delete-btn {
+        grid-column: 3;
+        grid-row: 1 / span 3;
+      }
+
+      .selection-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .backup-actions {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div class="topbar">
+      <span>Kanji Flashcard</span>
+      <span id="counter"></span>
+    </div>
+
+    <section class="card" id="card" title="คลิกเพื่อดูคำอ่าน">
+      <div class="kanji" id="kanji"></div>
+      <div class="reading hidden" id="reading"></div>
+      <div class="meaning hidden" id="meaning"></div>
+      <div class="empty" id="emptyMessage" style="display:none;">
+        ยังไม่มีคำศัพท์ กรุณาเพิ่มคำศัพท์ด้านล่าง
+      </div>
+    </section>
+
+    <div class="controls">
+      <button class="prev" id="prevBtn">← ย้อนกลับ</button>
+      <button class="next" id="nextBtn">ดูคำอ่าน</button>
+    </div>
+
+    <div class="extra-controls">
+      <button class="speak-btn" id="speakBtn" type="button">🔊 อ่านออกเสียง</button>
+      <button class="manage-toggle" id="manageToggleBtn" type="button">ซ่อนจัดการคำศัพท์</button>
+    </div>
+
+    <div class="random-controls">
+      <input id="randomCountInput" type="number" min="1" inputmode="numeric"
+             placeholder="จำนวนคำที่ต้องการสุ่ม" />
+      <button class="random-btn" id="randomBtn" type="button">🔀 สุ่มคำ</button>
+    </div>
+    <div class="random-status" id="randomStatus"></div>
+
+    <div class="hint">กดลูกศรซ้าย/ขวา หรือคลิกการ์ดได้</div>
+
+    <section class="manager" id="managerSection">
+      <h2>จัดการคำศัพท์</h2>
+
+      <form class="form-grid" id="addForm">
+        <input id="kanjiInput" type="text" placeholder="คันจิ เช่น 食べる" required />
+        <input id="readingInput" type="text" placeholder="คำอ่าน เช่น たべる" required />
+        <input id="meaningInput" type="text" placeholder="ความหมาย เช่น to eat" />
+        <button class="add-btn" type="submit">+ เพิ่มคำ</button>
+      </form>
+
+      <div class="selection-actions">
+        <button class="selected-random-btn" id="randomSelectedBtn" type="button">สุ่มคำที่เลือก</button>
+        <button class="select-all-btn" id="selectAllBtn" type="button">เลือกทั้งหมด</button>
+        <button class="clear-select-btn" id="clearSelectionBtn" type="button">ยกเลิกทั้งหมด</button>
+      </div>
+
+      <div class="backup-actions">
+        <button class="export-btn" id="exportBtn" type="button">ส่งออกคำศัพท์ (.json)</button>
+        <button class="import-btn" id="importBtn" type="button">นำเข้าคำศัพท์ (.json)</button>
+        <input class="file-input" id="importFileInput" type="file" accept=".json,application/json" />
+      </div>
+
+      <div class="word-list" id="wordList"></div>
+    </section>
+  </main>
+
+  <script>
+    const defaultWords = [
+      { kanji: "食べる", reading: "たべる", meaning: "to eat" },
+      { kanji: "飲む", reading: "のむ", meaning: "to drink" },
+      { kanji: "行く", reading: "いく", meaning: "to go" },
+      { kanji: "見る", reading: "みる", meaning: "to see / watch" },
+      { kanji: "話す", reading: "はなす", meaning: "to speak" }
+    ];
+
+    let allWords = JSON.parse(localStorage.getItem("kanjiFlashcards")) || defaultWords;
+    let kanjiList = [...allWords];
+    let currentIndex = 0;
+    let answerVisible = false;
+    let randomMode = false;
+    let selectedWords = new Set(
+      JSON.parse(localStorage.getItem("kanjiSelectedWords") || "[]")
+    );
+
+    const kanjiEl = document.getElementById("kanji");
+    const readingEl = document.getElementById("reading");
+    const meaningEl = document.getElementById("meaning");
+    const emptyMessage = document.getElementById("emptyMessage");
+    const counterEl = document.getElementById("counter");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const card = document.getElementById("card");
+    const addForm = document.getElementById("addForm");
+    const kanjiInput = document.getElementById("kanjiInput");
+    const readingInput = document.getElementById("readingInput");
+    const meaningInput = document.getElementById("meaningInput");
+    const wordList = document.getElementById("wordList");
+    const speakBtn = document.getElementById("speakBtn");
+    const manageToggleBtn = document.getElementById("manageToggleBtn");
+    const managerSection = document.getElementById("managerSection");
+    const randomCountInput = document.getElementById("randomCountInput");
+    const randomBtn = document.getElementById("randomBtn");
+    const randomStatus = document.getElementById("randomStatus");
+    const randomSelectedBtn = document.getElementById("randomSelectedBtn");
+    const selectAllBtn = document.getElementById("selectAllBtn");
+    const clearSelectionBtn = document.getElementById("clearSelectionBtn");
+    const exportBtn = document.getElementById("exportBtn");
+    const importBtn = document.getElementById("importBtn");
+    const importFileInput = document.getElementById("importFileInput");
+
+    function saveWords() {
+      localStorage.setItem("kanjiFlashcards", JSON.stringify(allWords));
+    }
+
+    function getWordKey(item) {
+      return `${item.kanji}|||${item.reading}|||${item.meaning || ""}`;
+    }
+
+    function saveSelection() {
+      localStorage.setItem("kanjiSelectedWords", JSON.stringify([...selectedWords]));
+    }
+
+    function renderCard() {
+      const hasWords = kanjiList.length > 0;
+
+      kanjiEl.style.display = hasWords ? "block" : "none";
+      readingEl.style.display = hasWords ? "block" : "none";
+      meaningEl.style.display = hasWords ? "block" : "none";
+      emptyMessage.style.display = hasWords ? "none" : "block";
+
+      if (!hasWords) {
+        counterEl.textContent = "0 / 0";
+        prevBtn.disabled = true;
+        nextBtn.disabled = true;
+        speakBtn.disabled = true;
+        return;
+      }
+
+      if (currentIndex >= kanjiList.length) {
+        currentIndex = kanjiList.length - 1;
+      }
+
+      const item = kanjiList[currentIndex];
+
+      kanjiEl.textContent = item.kanji;
+      readingEl.textContent = item.reading;
+      meaningEl.textContent = item.meaning || "";
+
+      readingEl.classList.toggle("hidden", !answerVisible);
+      meaningEl.classList.toggle("hidden", !answerVisible);
+
+      counterEl.textContent = `${currentIndex + 1} / ${kanjiList.length}`;
+      prevBtn.disabled = currentIndex === 0 && !answerVisible;
+      nextBtn.disabled = false;
+      speakBtn.disabled = false;
+      nextBtn.textContent = answerVisible ? "คำถัดไป →" : "ดูคำอ่าน";
+    }
+
+    function renderWordList() {
+      wordList.innerHTML = "";
+
+      if (allWords.length === 0) {
+        wordList.innerHTML = '<div class="empty">ยังไม่มีคำศัพท์ในรายการ</div>';
+        return;
+      }
+
+      allWords.forEach((item, index) => {
+        const row = document.createElement("div");
+        row.className = "word-item";
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.className = "select-checkbox";
+        checkbox.checked = selectedWords.has(getWordKey(item));
+        checkbox.title = "เลือกคำนี้";
+
+        checkbox.addEventListener("change", () => {
+          const key = getWordKey(item);
+          if (checkbox.checked) selectedWords.add(key);
+          else selectedWords.delete(key);
+          saveSelection();
+          updateRandomStatus();
+        });
+
+        const kanji = document.createElement("div");
+        kanji.className = "word-kanji";
+        kanji.textContent = item.kanji;
+
+        const reading = document.createElement("div");
+        reading.className = "word-reading";
+        reading.textContent = item.reading;
+
+        const meaning = document.createElement("div");
+        meaning.className = "word-meaning";
+        meaning.textContent = item.meaning || "-";
+
+        const deleteButton = document.createElement("button");
+        deleteButton.className = "delete-btn";
+        deleteButton.type = "button";
+        deleteButton.textContent = "ลบ";
+        deleteButton.addEventListener("click", () => deleteWord(index));
+
+        row.append(checkbox, kanji, reading, meaning, deleteButton);
+        wordList.appendChild(row);
+      });
+    }
+
+    function renderAll() {
+      renderCard();
+      renderWordList();
+    }
+
+    function next() {
+      if (kanjiList.length === 0) return;
+
+      if (!answerVisible) {
+        answerVisible = true;
+      } else if (currentIndex < kanjiList.length - 1) {
+        currentIndex++;
+        answerVisible = false;
+      } else {
+        currentIndex = 0;
+        answerVisible = false;
+      }
+
+      renderCard();
+    }
+
+    function previous() {
+      if (kanjiList.length === 0) return;
+
+      if (answerVisible) {
+        answerVisible = false;
+      } else if (currentIndex > 0) {
+        currentIndex--;
+        answerVisible = true;
+      }
+
+      renderCard();
+    }
+
+    function deleteWord(index) {
+      const wordToDelete = allWords[index];
+      selectedWords.delete(getWordKey(wordToDelete));
+      saveSelection();
+      allWords.splice(index, 1);
+
+      if (randomMode) {
+        kanjiList = kanjiList.filter(item => item !== wordToDelete);
+      } else {
+        kanjiList = [...allWords];
+      }
+
+      if (currentIndex >= kanjiList.length) {
+        currentIndex = Math.max(0, kanjiList.length - 1);
+      }
+
+      answerVisible = false;
+      saveWords();
+      updateRandomStatus();
+      renderAll();
+    }
+
+    addForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      const newWord = {
+        kanji: kanjiInput.value.trim(),
+        reading: readingInput.value.trim(),
+        meaning: meaningInput.value.trim()
+      };
+
+      if (!newWord.kanji || !newWord.reading) return;
+
+      allWords.push(newWord);
+
+      if (!randomMode) {
+        kanjiList = [...allWords];
+      }
+
+      saveWords();
+
+      kanjiInput.value = "";
+      readingInput.value = "";
+      meaningInput.value = "";
+      kanjiInput.focus();
+
+      if (kanjiList.length === 1) {
+        currentIndex = 0;
+        answerVisible = false;
+      }
+
+      updateRandomStatus();
+      renderAll();
+    });
+
+    function shuffleArray(items) {
+      const copy = [...items];
+
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+
+      return copy;
+    }
+
+    function updateRandomStatus(message = "") {
+      if (message) {
+        randomStatus.textContent = message;
+        return;
+      }
+
+      const selectedCount = allWords.filter(item => selectedWords.has(getWordKey(item))).length;
+      if (randomMode) {
+        randomStatus.textContent = `กำลังใช้ชุดพิเศษ ${kanjiList.length} คำ จากทั้งหมด ${allWords.length} คำ | เลือกไว้ ${selectedCount} คำ`;
+      } else {
+        randomStatus.textContent = `กำลังใช้คำทั้งหมด ${allWords.length} คำ | เลือกไว้ ${selectedCount} คำ`;
+      }
+    }
+
+    function randomizeWords() {
+      if (allWords.length === 0) {
+        updateRandomStatus("ยังไม่มีคำศัพท์สำหรับสุ่ม");
+        return;
+      }
+
+      const requestedCount = Number.parseInt(randomCountInput.value, 10);
+      const safeCount = Number.isFinite(requestedCount) && requestedCount > 0
+        ? Math.min(requestedCount, allWords.length)
+        : allWords.length;
+
+      kanjiList = shuffleArray(allWords).slice(0, safeCount);
+      currentIndex = 0;
+      answerVisible = false;
+      randomMode = true;
+
+      const extraMessage = requestedCount > allWords.length
+        ? ` ระบุ ${requestedCount} คำ แต่มีเพียง ${allWords.length} คำ จึงใช้ทั้งหมด`
+        : "";
+
+      updateRandomStatus(`สุ่มแล้ว ${safeCount} คำ.${extraMessage}`);
+      renderCard();
+    }
+
+    function useSelectedWords() {
+      const chosen = allWords.filter(item => selectedWords.has(getWordKey(item)));
+      if (chosen.length === 0) {
+        updateRandomStatus("ยังไม่ได้เลือกคำศัพท์");
+        return;
+      }
+      kanjiList = [...chosen];
+      currentIndex = 0;
+      answerVisible = false;
+      randomMode = true;
+      updateRandomStatus(`กำลังใช้คำที่เลือก ${chosen.length} คำ`);
+      renderCard();
+    }
+
+function randomizeSelectedWords() {
+      const chosen = allWords.filter(item => selectedWords.has(getWordKey(item)));
+      if (chosen.length === 0) {
+        updateRandomStatus("ยังไม่ได้เลือกคำศัพท์");
+        return;
+      }
+
+      const requestedCount = Number.parseInt(randomCountInput.value, 10);
+      const safeCount = Number.isFinite(requestedCount) && requestedCount > 0
+        ? Math.min(requestedCount, chosen.length)
+        : chosen.length;
+
+      kanjiList = shuffleArray(chosen).slice(0, safeCount);
+      currentIndex = 0;
+      answerVisible = false;
+      randomMode = true;
+
+      const extraMessage = requestedCount > chosen.length
+        ? ` ระบุ ${requestedCount} คำ แต่ในคำที่เลือกมีเพียง ${chosen.length} คำ จึงใช้ทั้งหมด`
+        : "";
+
+      updateRandomStatus(`สุ่มจากคำที่เลือกแล้ว ${safeCount} คำ.${extraMessage}`);
+      renderCard();
+    }
+
+    function selectAllWords() {
+      selectedWords = new Set(allWords.map(getWordKey));
+      saveSelection();
+      renderWordList();
+      updateRandomStatus();
+    }
+
+    function clearSelectedWords() {
+      selectedWords.clear();
+      saveSelection();
+      renderWordList();
+      updateRandomStatus();
+    }
+
+    function exportWordsToJson() {
+      const backup = {
+        app: "Kanji Flashcard",
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        words: allWords
+      };
+
+      const json = JSON.stringify(backup, null, 2);
+      const blob = new Blob([json], { type: "application/json;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      const date = new Date();
+      const yyyy = date.getFullYear();
+      const mm = String(date.getMonth() + 1).padStart(2, "0");
+      const dd = String(date.getDate()).padStart(2, "0");
+
+      link.href = url;
+      link.download = `kanji-words-${yyyy}-${mm}-${dd}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      updateRandomStatus(`ส่งออกคำศัพท์แล้ว ${allWords.length} คำ`);
+    }
+
+    function normalizeImportedWords(data) {
+      const sourceWords = Array.isArray(data) ? data : data?.words;
+
+      if (!Array.isArray(sourceWords)) {
+        throw new Error("รูปแบบไฟล์ไม่ถูกต้อง");
+      }
+
+      return sourceWords
+        .filter(item => item && typeof item === "object")
+        .map(item => ({
+          kanji: String(item.kanji || "").trim(),
+          reading: String(item.reading || "").trim(),
+          meaning: String(item.meaning || "").trim()
+        }))
+        .filter(item => item.kanji && item.reading);
+    }
+
+    async function importWordsFromJson(file) {
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        const parsed = JSON.parse(text);
+        const importedWords = normalizeImportedWords(parsed);
+
+        if (importedWords.length === 0) {
+          throw new Error("ไม่พบคำศัพท์ที่ใช้งานได้ในไฟล์");
+        }
+
+        const shouldReplace = confirm(
+          `พบ ${importedWords.length} คำ\n\nกด OK เพื่อแทนที่คำศัพท์เดิม\nกด Cancel เพื่อเพิ่มต่อท้ายรายการเดิม`
+        );
+
+        if (shouldReplace) {
+          allWords = importedWords;
+          selectedWords.clear();
+        } else {
+          const existingKeys = new Set(allWords.map(getWordKey));
+
+          importedWords.forEach(item => {
+            const key = getWordKey(item);
+            if (!existingKeys.has(key)) {
+              allWords.push(item);
+              existingKeys.add(key);
+            }
+          });
+        }
+
+        kanjiList = [...allWords];
+        currentIndex = 0;
+        answerVisible = false;
+        randomMode = false;
+
+        saveWords();
+        saveSelection();
+        renderAll();
+        updateRandomStatus(`นำเข้าสำเร็จ ขณะนี้มีทั้งหมด ${allWords.length} คำ`);
+      } catch (error) {
+        alert(`นำเข้าไม่สำเร็จ: ${error.message}`);
+      } finally {
+        importFileInput.value = "";
+      }
+    }
+
+    function speakCurrentWord() {
+      if (kanjiList.length === 0 || !("speechSynthesis" in window)) {
+        alert("เบราว์เซอร์นี้ไม่รองรับการอ่านออกเสียง");
+        return;
+      }
+
+      window.speechSynthesis.cancel();
+
+      const item = kanjiList[currentIndex];
+      const textToSpeak = item.reading || item.kanji;
+      const utterance = new SpeechSynthesisUtterance(textToSpeak);
+
+      utterance.lang = "ja-JP";
+      utterance.rate = 0.8;
+      utterance.pitch = 1;
+
+      const voices = window.speechSynthesis.getVoices();
+      const japaneseVoice = voices.find(voice =>
+        voice.lang && voice.lang.toLowerCase().startsWith("ja")
+      );
+
+      if (japaneseVoice) {
+        utterance.voice = japaneseVoice;
+      }
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function updateManagerVisibility() {
+      const isHidden = localStorage.getItem("kanjiManagerHidden") === "true";
+      managerSection.classList.toggle("is-hidden", isHidden);
+      manageToggleBtn.textContent = isHidden
+        ? "แสดงจัดการคำศัพท์"
+        : "ซ่อนจัดการคำศัพท์";
+    }
+
+    speakBtn.addEventListener("click", speakCurrentWord);
+    randomBtn.addEventListener("click", randomizeWords);
+    randomSelectedBtn.addEventListener("click", randomizeSelectedWords);
+    selectAllBtn.addEventListener("click", selectAllWords);
+    clearSelectionBtn.addEventListener("click", clearSelectedWords);
+    exportBtn.addEventListener("click", exportWordsToJson);
+    importBtn.addEventListener("click", () => importFileInput.click());
+    importFileInput.addEventListener("change", () => {
+      importWordsFromJson(importFileInput.files[0]);
+    });
+
+    randomCountInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        randomizeWords();
+      }
+    });
+
+    manageToggleBtn.addEventListener("click", () => {
+      const willHide = !managerSection.classList.contains("is-hidden");
+      localStorage.setItem("kanjiManagerHidden", String(willHide));
+      updateManagerVisibility();
+    });
+
+    nextBtn.addEventListener("click", next);
+    prevBtn.addEventListener("click", previous);
+    card.addEventListener("click", next);
+
+    document.addEventListener("keydown", (event) => {
+      const isTyping = ["INPUT", "TEXTAREA"].includes(document.activeElement.tagName);
+      if (isTyping) return;
+
+      if (event.key === "ArrowRight" || event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        next();
+      }
+
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        previous();
+      }
+    });
+
+    updateManagerVisibility();
+    updateRandomStatus();
+    renderAll();
+  </script>
+</body>
+</html>
